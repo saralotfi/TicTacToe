@@ -1,3 +1,4 @@
+from os import system
 def first_board():
     board = []
     for _ in range(3):
@@ -53,8 +54,10 @@ def play_game():
             print_board(board)
             print(f"{current_player} is win")
             return
+        system( 'cls' )
         current_player = 'O' if current_player == 'X' else 'X'
 
     print_board(board)
     print("equal")
 play_game()
+
