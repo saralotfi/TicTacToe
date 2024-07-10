@@ -1,63 +1,94 @@
 from os import system
-def first_board():
-    board = []
-    for _ in range(3):
-        row = []
+class TicTacToe:
+    def __init__(self):
+        self.board = self.initialBoard()
+        self.current_player = 'X'
+
+    def initialBoard(self):
+        board = []
         for _ in range(3):
-            row.append('-')
-        board.append(row)
-    return board
+            row = ['-'] * 3
+            board.append(row)
+        return board
 
-def print_board(board):
-    for row in board:
-        print(' '.join(row))
-    print()
+    def draw(self):
+        for row in self.board:
+            print(' '.join(row))
+        print()
 
-def is_board_full(board):
-    for row in board:
-        if '-' in row:
-            return False
-    return True
-
-def is_win(board, player):
-    for row in board:
-        if all([cell == player for cell in row]):
-            return True
-    for col in range(3):
-        if all([board[row][col] == player for row in range(3)]):
-            return True
-    if all([board[i][i] == player for i in range(3)]):
+    def isfull(self):
+        for row in self.board:
+            if '-' in row:
+                return False
         return True
-    if all([board[i][2 - i] == player for i in range(3)]):
-        return True
-    return False
 
-def play_game():
-    board = first_board()
-    current_player = 'X'
-    
-    while not is_board_full(board):
-        print_board(board)
+    def all_equal(self, iterator, player):
+        for cell in iterator:
+            if cell != player:
+                return False
+        return True
+
+    def get_diagonal(self, main=True):
+        if main:
+            return (self.board[i][i] for i in range(3))
+        else:
+            return (self.board[i][2 - i] for i in range(3))
+
+    def check_rows(self, player):
+        for row in self.board:
+            if self.all_equal(row, player):
+                return True
+        return False
+
+    def check_columns(self, player):
+        for col in range(3):
+            if self.all_equal((self.board[row][col] for row in range(3)), player):
+                return True
+        return False
+
+    def check_diagonals(self, player):
+        if self.all_equal(self.get_diagonal(main=True), player) or self.all_equal(self.get_diagonal(main=False), player):
+            return True
+        return False
+
+    def iswin(self, player):
+        return self.check_rows(player) or self.check_columns(player) or self.check_diagonals(player)
+
+    def playturn(self):
+        while not self.isfull():
+            self.draw()
+            if not self.take_player_turn():
+                continue
+            
+            if self.iswin(self.current_player):
+                self.draw()
+                print(f"{self.current_player} is win!")
+                return
+            system( 'cls' )
+            self.current_player = 'O' if self.current_player == 'X' else 'X'
+        
+        self.draw()
+        print("It's a draw!")
+
+    def take_player_turn(self):
         try:
-            row = int(input(f"{current_player}، row? (0 , 2): "))
+            row = int(input(f"{self.current_player}, row? (0 , 2): "))
             col = int(input("col? (0 , 2): "))
         except ValueError:
-            print("enter your number")
-            continue
+            print("Enter valid numbers.")
+            return False
 
-       
-        if row < 0 or row > 2 or col < 0 or col > 2 or board[row][col] != '-':
-            print("Re-enter error")
-            continue
-        board[row][col] = current_player
-        if is_win(board, current_player):
-            print_board(board)
-            print(f"{current_player} is win")
-            return
-        system( 'cls' )
-        current_player = 'O' if current_player == 'X' else 'X'
+        if 0 <= row <= 2 and 0 <= col <= 2 and self.board[row][col] == '-':
+            self.board[row][col] = self.current_player
+            return True
+        else:
+            print("Invalid input or cell already occupied. Please re-enter.")
+            return False
 
-    print_board(board)
-    print("equal")
-play_game()
+def start_game():
+    game = TicTacToe()
+    game.play_turn()
+
+start_game()
+
 
