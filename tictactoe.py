@@ -52,8 +52,11 @@ class TicTacToe:
             return True
         return False
 
-    def is_win(self, player):
+    def check_all(self, player):
         return self.check_rows(player) or self.check_columns(player) or self.check_diagonals(player)
+        
+    def is_win(self, player):
+        return self.check_all(player)
 
     def play_turn(self):
         while not self.is_board_full():
@@ -91,6 +94,7 @@ def start_game():
     game.play_turn()
 
 start_game()
+
 
 
 
