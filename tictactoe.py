@@ -1,3 +1,4 @@
+import os
 from os import system
 
 class TicTacToe:
@@ -22,36 +23,36 @@ class TicTacToe:
                 return False
         return True
 
-    def all_equal(iterator, player):
+    def all_equal(self, iterator, player):
         for cell in iterator:
             if cell != player:
                 return False
         return True
 
-    def get_diagonal(main=True):
-        if main:
-            return (self.board[i][i] for i in range(3))
-        else:
-            return (self.board[i][2 - i] for i in range(3))
+    def get_diagonals(self):
+        main_diagonal = [self.board[i][i] for i in range(3)]
+        anti_diagonal = [self.board[i][2 - i] for i in range(3)]
+        return main_diagonal, anti_diagonal
 
-    def check_rows(player):
+    def check_rows(self, player):
         for row in self.board:
             if self.all_equal(row, player):
                 return True
         return False
 
-    def check_columns(player):
+    def check_columns(self, player):
         for col in range(3):
             if self.all_equal((self.board[row][col] for row in range(3)), player):
                 return True
         return False
 
-    def check_diagonals(player):
-        if self.all_equal(self.get_diagonal(main=True), player) or self.all_equal(self.get_diagonal(main=False), player):
+    def check_diagonals(self, player):
+        main_diagonal, anti_diagonal = self.get_diagonals()
+        if self.all_equal(main_diagonal, player) or self.all_equal(anti_diagonal, player):
             return True
         return False
 
-    def iswin(player):
+    def iswin(self, player):
         return self.check_rows(player) or self.check_columns(player) or self.check_diagonals(player)
 
     def playturn(self):
@@ -62,7 +63,7 @@ class TicTacToe:
 
             if self.iswin(self.current_player):
                 self.draw()
-                print(f"{self.current_player} is win!")
+                print(f"{self.current_player} wins!")
                 return
             system('cls' if os.name == 'nt' else 'clear')
             self.current_player = 'O' if self.current_player == 'X' else 'X'
@@ -72,8 +73,8 @@ class TicTacToe:
 
     def take_player_turn(self):
         try:
-            row = int(input(f"{self.current_player}, row? (0 , 2): "))
-            col = int(input("col? (0 , 2): "))
+            row = int(input(f"{self.current_player}, row? (0, 2): "))
+            col = int(input("col? (0, 2): "))
         except ValueError:
             print("Enter valid numbers.")
             return False
@@ -90,6 +91,9 @@ def start_game():
     game.playturn()
 
 start_game()
+
+
+
 
 
 
