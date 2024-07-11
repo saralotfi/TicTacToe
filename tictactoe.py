@@ -3,10 +3,10 @@ from os import system
 
 class TicTacToe:
     def __init__(self):
-        self.initialBoard()
+        self.initial_Board()
         self.current_player = 'X'
 
-    def initialBoard(self):
+    def initial_Board(self):
         self.board = []
         for _ in range(3):
             row = ['-'] * 3
@@ -52,16 +52,16 @@ class TicTacToe:
             return True
         return False
 
-    def iswin(self, player):
+    def is_win(self, player):
         return self.check_rows(player) or self.check_columns(player) or self.check_diagonals(player)
 
-    def playturn(self):
+    def play_turn(self):
         while not self.is_board_full():
             self.draw()
             if not self.take_player_turn():
                 continue
 
-            if self.iswin(self.current_player):
+            if self.is_win(self.current_player):
                 self.draw()
                 print(f"{self.current_player} wins!")
                 return
@@ -88,7 +88,7 @@ class TicTacToe:
 
 def start_game():
     game = TicTacToe()
-    game.playturn()
+    game.play_turn()
 
 start_game()
 
