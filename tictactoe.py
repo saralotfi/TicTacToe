@@ -46,11 +46,14 @@ class TicTacToe:
                 return True
         return False
 
-    def check_diagonals(self, player):
+    def all_diagonals_player(self, player):
         main_diagonal, anti_diagonal = self.get_diagonals()
         if self.all_equal(main_diagonal, player) or self.all_equal(anti_diagonal, player):
             return True
         return False
+
+    def check_diagonals(self, player):
+        return self.all_diagonals_player(player)
 
     def check_all(self, player):
         return self.check_rows(player) or self.check_columns(player) or self.check_diagonals(player)
@@ -94,6 +97,7 @@ def start_game():
     game.play_turn()
 
 start_game()
+
 
 
 
