@@ -1,33 +1,31 @@
+import curses
 import os
-from os import system
 
 class TicTacToe:
-    def __init__(self):
+    def __init__(self, stdscr):
+        self.stdscr = stdscr
         self.initial_Board()
         self.current_player = 'X'
+        self.cursor_row, self.cursor_col = 0, 0
 
     def initial_Board(self):
-        self.board = []
-        for _ in range(3):
-            row = ['-'] * 3
-            self.board.append(row)
+        self.board = [['-' for _ in range(3)] for _ in range(3)]
 
     def draw(self):
-        for row in self.board:
-            print(' '.join(row))
-        print()
+        self.stdscr.clear()
+        for r in range(3):
+            for c in range(3):
+                char = self.board[r][c]
+                if (r, c) == (self.cursor_row, self.cursor_col):
+                    char = f"[{char}]"
+                self.stdscr.addstr(r, c * 4, f" {char} ")
+        self.stdscr.refresh()
 
     def is_board_full(self):
-        for row in self.board:
-            if '-' in row:
-                return False
-        return True
+        return all(cell != '-' for row in self.board for cell in row)
 
     def all_equal(self, iterator, player):
-        for cell in iterator:
-            if cell != player:
-                return False
-        return True
+        return all(cell == player for cell in iterator)
 
     def get_diagonals(self):
         main_diagonal = [self.board[i][i] for i in range(3)]
@@ -35,74 +33,56 @@ class TicTacToe:
         return main_diagonal, anti_diagonal
 
     def check_rows(self, player):
-        for row in self.board:
-            if self.all_equal(row, player):
-                return True
-        return False
+        return any(self.all_equal(row, player) for row in self.board)
 
     def check_columns(self, player):
-        for col in range(3):
-            if self.all_equal((self.board[row][col] for row in range(3)), player):
-                return True
-        return False
-
-    def all_diagonals_player(self, player):
-        main_diagonal, anti_diagonal = self.get_diagonals()
-        if self.all_equal(main_diagonal, player) or self.all_equal(anti_diagonal, player):
-            return True
-        return False
+        return any(self.all_equal((self.board[row][col] for row in range(3)), player) for col in range(3))
 
     def check_diagonals(self, player):
-        return self.all_diagonals_player(player)
+        main_diagonal, anti_diagonal = self.get_diagonals()
+        return self.all_equal(main_diagonal, player) or self.all_equal(anti_diagonal, player)
 
     def check_all(self, player):
         return self.check_rows(player) or self.check_columns(player) or self.check_diagonals(player)
-        
+
     def is_win(self, player):
         return self.check_all(player)
 
     def play_turn(self):
         while not self.is_board_full():
             self.draw()
-            if not self.take_player_turn():
-                continue
+            key = self.stdscr.getch()
 
-            if self.is_win(self.current_player):
-                self.draw()
-                print(f"{self.current_player} wins!")
-                return
-            system('cls' if os.name == 'nt' else 'clear')
-            self.current_player = 'O' if self.current_player == 'X' else 'X'
-        
+            if key == curses.KEY_UP:
+                self.cursor_row = (self.cursor_row - 1) % 3
+            elif key == curses.KEY_DOWN:
+                self.cursor_row = (self.cursor_row + 1) % 3
+            elif key == curses.KEY_LEFT:
+                self.cursor_col = (self.cursor_col - 1) % 3
+            elif key == curses.KEY_RIGHT:
+                self.cursor_col = (self.cursor_col + 1) % 3
+            elif key == 10:  
+                if self.board[self.cursor_row][self.cursor_col] == '-':
+                    self.board[self.cursor_row][self.cursor_col] = self.current_player
+                    if self.is_win(self.current_player):
+                        self.draw()
+                        self.stdscr.addstr(4, 0, f"{self.current_player} wins!")
+                        self.stdscr.refresh()
+                        self.stdscr.getch()
+                        return
+                    self.current_player = 'O' if self.current_player == 'X' else 'X'
+
+            self.stdscr.clear()
         self.draw()
-        print("It's a draw!")
+        self.stdscr.addstr(4, 0, "equal")
+        self.stdscr.refresh()
+        self.stdscr.getch()
 
-    def take_player_turn(self):
-        try:
-            row = int(input(f"{self.current_player}, row? (0, 2): "))
-            col = int(input("col? (0, 2): "))
-        except ValueError:
-            print("Enter valid numbers.")
-            return False
-
-        if 0 <= row <= 2 and 0 <= col <= 2 and self.board[row][col] == '-':
-            self.board[row][col] = self.current_player
-            return True
-        else:
-            print("Invalid input or cell already occupied. Please re-enter.")
-            return False
-
-def start_game():
-    game = TicTacToe()
+def start_game(stdscr):
+    game = TicTacToe(stdscr)
     game.play_turn()
 
-start_game()
-
-
-
-
-
-
+curses.wrapper(start_game)
 
 
 
