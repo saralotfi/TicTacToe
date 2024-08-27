@@ -1,5 +1,4 @@
 import curses
-import os
 
 class TicTacToe:
     def __init__(self, stdscr):
@@ -17,8 +16,13 @@ class TicTacToe:
             for c in range(3):
                 char = self.board[r][c]
                 if (r, c) == (self.cursor_row, self.cursor_col):
-                    char = f"[{char}]"
-                self.stdscr.addstr(r, c * 4, f" {char} ")
+                    if char == '-':
+                        char = f"[{self.current_player}]"
+                    else:
+                        char = f"[{char}]"
+                else:
+                    char = f" {char} " if char == '-' else f" {char} "
+                self.stdscr.addstr(r, c * 4, char)
         self.stdscr.refresh()
 
     def is_board_full(self):
@@ -74,7 +78,7 @@ class TicTacToe:
 
             self.stdscr.clear()
         self.draw()
-        self.stdscr.addstr(4, 0, "equal")
+        self.stdscr.addstr(4, 0, "Draw!")
         self.stdscr.refresh()
         self.stdscr.getch()
 
@@ -83,6 +87,7 @@ def start_game(stdscr):
     game.play_turn()
 
 curses.wrapper(start_game)
+
 
 
 
