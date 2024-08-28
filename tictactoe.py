@@ -23,6 +23,7 @@ class TicTacToe:
                 else:
                     char = f" {char} " if char == '-' else f" {char} "
                 self.stdscr.addstr(r, c * 4, char)
+        self.stdscr.addstr(4, 0, "Press 'm' for menu")
         self.stdscr.refresh()
 
     def is_board_full(self):
@@ -56,7 +57,7 @@ class TicTacToe:
         while not self.is_board_full():
             self.draw()
             key = self.stdscr.getch()
-
+            
             if key == curses.KEY_UP:
                 self.cursor_row = (self.cursor_row - 1) % 3
             elif key == curses.KEY_DOWN:
@@ -65,28 +66,64 @@ class TicTacToe:
                 self.cursor_col = (self.cursor_col - 1) % 3
             elif key == curses.KEY_RIGHT:
                 self.cursor_col = (self.cursor_col + 1) % 3
-            elif key == 10:  
+            elif key == 10:
                 if self.board[self.cursor_row][self.cursor_col] == '-':
                     self.board[self.cursor_row][self.cursor_col] = self.current_player
                     if self.is_win(self.current_player):
                         self.draw()
-                        self.stdscr.addstr(4, 0, f"{self.current_player} wins!")
+                        self.stdscr.addstr(5, 0, f"{self.current_player} wins!")
                         self.stdscr.refresh()
                         self.stdscr.getch()
                         return
                     self.current_player = 'O' if self.current_player == 'X' else 'X'
+            elif key == ord('m'):  
+                selected_option = self.show_menu()
+                if selected_option == "Exit":
+                    return
 
             self.stdscr.clear()
+        
         self.draw()
-        self.stdscr.addstr(4, 0, "Draw!")
+        self.stdscr.addstr(5, 0, "Draw!")
         self.stdscr.refresh()
         self.stdscr.getch()
 
+    def show_menu(self):
+        menu_items = ["Continue", "Exit"]
+        current_row = 0
+
+        while True:
+            self.stdscr.clear()
+            for idx, item in enumerate(menu_items):
+                if idx == current_row:
+                    self.stdscr.addstr(idx, 0, item, curses.color_pair(1))
+                else:
+                    self.stdscr.addstr(idx, 0, item)
+            self.stdscr.refresh()
+
+            key = self.stdscr.getch()
+
+            if key == curses.KEY_UP and current_row > 0:
+                current_row -= 1
+            elif key == curses.KEY_DOWN and current_row < len(menu_items) - 1:
+                current_row += 1
+            elif key == 10: 
+                if current_row == 1:  
+                    return "Exit"
+                elif current_row == 2:
+                    pass
+                else:
+                    return "Continue"
+
 def start_game(stdscr):
+    curses.curs_set(0)
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
     game = TicTacToe(stdscr)
     game.play_turn()
 
 curses.wrapper(start_game)
+
+
 
 
 
