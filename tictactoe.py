@@ -1,13 +1,41 @@
 import curses
+import sqlite3
+from datetime import datetime
+import time
 
 class TicTacToe:
     def __init__(self, stdscr):
         self.stdscr = stdscr
-        self.initial_Board()
+        self.initialize_database()
+        self.initial_board()
         self.current_player = 'X'
         self.cursor_row, self.cursor_col = 0, 0
 
-    def initial_Board(self):
+    def initialize_database(self):
+        conn = sqlite3.connect('tic_tac_toe.db')
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS game_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                winner TEXT,
+                duration REAL,
+                date TEXT
+            )
+        ''')
+        conn.commit()
+        conn.close()
+
+    def save_game_history(self, winner, duration):
+        conn = sqlite3.connect('tic_tac_toe.db')
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO game_history (winner, duration, date)
+            VALUES (?, ?, ?)
+        ''', (winner, duration, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        conn.commit()
+        conn.close()
+
+    def initial_board(self):
         self.board = [['-' for _ in range(3)] for _ in range(3)]
 
     def draw(self):
@@ -54,10 +82,12 @@ class TicTacToe:
         return self.check_all(player)
 
     def play_turn(self):
+        start_time = time.time()  
+
         while not self.is_board_full():
             self.draw()
             key = self.stdscr.getch()
-            
+
             if key == curses.KEY_UP:
                 self.cursor_row = (self.cursor_row - 1) % 3
             elif key == curses.KEY_DOWN:
@@ -70,6 +100,10 @@ class TicTacToe:
                 if self.board[self.cursor_row][self.cursor_col] == '-':
                     self.board[self.cursor_row][self.cursor_col] = self.current_player
                     if self.is_win(self.current_player):
+                        end_time = time.time()  
+                        game_duration = end_time - start_time
+                        self.save_game_history(self.current_player, game_duration)
+
                         self.draw()
                         self.stdscr.addstr(5, 0, f"{self.current_player} wins!")
                         self.stdscr.refresh()
@@ -82,14 +116,14 @@ class TicTacToe:
                     return
 
             self.stdscr.clear()
-        
+
         self.draw()
         self.stdscr.addstr(5, 0, "Draw!")
         self.stdscr.refresh()
         self.stdscr.getch()
 
     def show_menu(self):
-        menu_items = ["Continue", "Exit"]
+        menu_items = ["Continue", "History", "Exit"]
         current_row = 0
 
         while True:
@@ -109,11 +143,29 @@ class TicTacToe:
                 current_row += 1
             elif key == 10: 
                 if current_row == 1:  
+                    self.show_history()
+                elif current_row == 2:  
                     return "Exit"
-                elif current_row == 2:
-                    pass
                 else:
                     return "Continue"
+
+    def show_history(self):
+        conn = sqlite3.connect('tic_tac_toe.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT winner, duration, date FROM game_history')
+        rows = cursor.fetchall()
+
+        self.stdscr.clear()
+        self.stdscr.addstr(0, 0, "Game History:")
+
+        for idx, (winner, duration, date) in enumerate(rows, start=1):
+            self.stdscr.addstr(idx, 0, f"Winner: {winner}, Duration: {duration:.2f} sec, Date: {date}")
+
+        self.stdscr.addstr(len(rows) + 2, 0, "Press any key to return...")
+        self.stdscr.refresh()
+        self.stdscr.getch()
+
+        conn.close()
 
 def start_game(stdscr):
     curses.curs_set(0)
@@ -122,9 +174,3 @@ def start_game(stdscr):
     game.play_turn()
 
 curses.wrapper(start_game)
-
-
-
-
-
-
