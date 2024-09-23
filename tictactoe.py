@@ -82,7 +82,7 @@ class TicTacToe:
         return self.check_all(player)
 
     def play_turn(self):
-        start_time = time.time()  
+        start_time = time.time()
 
         while not self.is_board_full():
             self.draw()
@@ -96,11 +96,11 @@ class TicTacToe:
                 self.cursor_col = (self.cursor_col - 1) % 3
             elif key == curses.KEY_RIGHT:
                 self.cursor_col = (self.cursor_col + 1) % 3
-            elif key == 10:
+            elif key == 10:  
                 if self.board[self.cursor_row][self.cursor_col] == '-':
                     self.board[self.cursor_row][self.cursor_col] = self.current_player
                     if self.is_win(self.current_player):
-                        end_time = time.time()  
+                        end_time = time.time()
                         game_duration = end_time - start_time
                         self.save_game_history(self.current_player, game_duration)
 
@@ -110,7 +110,7 @@ class TicTacToe:
                         self.stdscr.getch()
                         return
                     self.current_player = 'O' if self.current_player == 'X' else 'X'
-            elif key == ord('m'):  
+            elif key == ord('m'): 
                 selected_option = self.show_menu()
                 if selected_option == "Exit":
                     return
@@ -141,7 +141,7 @@ class TicTacToe:
                 current_row -= 1
             elif key == curses.KEY_DOWN and current_row < len(menu_items) - 1:
                 current_row += 1
-            elif key == 10: 
+            elif key == 10:  
                 if current_row == 1:  
                     self.show_history()
                 elif current_row == 2:  
@@ -156,12 +156,19 @@ class TicTacToe:
         rows = cursor.fetchall()
 
         self.stdscr.clear()
-        self.stdscr.addstr(0, 0, "Game History:")
+        
+        if not rows:
+            self.stdscr.addstr(0, 0, "No history available.")
+        else:
+            self.stdscr.addstr(0, 0, "Game History:")
+            max_y, max_x = self.stdscr.getmaxyx()  
 
-        for idx, (winner, duration, date) in enumerate(rows, start=1):
-            self.stdscr.addstr(idx, 0, f"Winner: {winner}, Duration: {duration:.2f} sec, Date: {date}")
+            for idx, (winner, duration, date) in enumerate(rows, start=1):
+                history_line = f"Winner: {winner}, Duration: {duration:.2f} sec, Date: {date}"
+                if idx < max_y - 2:
+                    self.stdscr.addstr(idx, 0, history_line[:max_x - 1])  
 
-        self.stdscr.addstr(len(rows) + 2, 0, "Press any key to return...")
+        self.stdscr.addstr(max_y - 2, 0, "Press any key to return...")
         self.stdscr.refresh()
         self.stdscr.getch()
 
@@ -174,3 +181,4 @@ def start_game(stdscr):
     game.play_turn()
 
 curses.wrapper(start_game)
+
