@@ -2,6 +2,7 @@ import curses
 import sqlite3
 from datetime import datetime
 import time
+import ast 
 
 class TicTacToe:
     def __init__(self, stdscr):
@@ -14,24 +15,44 @@ class TicTacToe:
     def initialize_database(self):
         conn = sqlite3.connect('tic_tac_toe.db')
         cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS game_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                winner TEXT,
-                duration REAL,
-                date TEXT
-            )
-        ''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS game_history (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            winner TEXT,
+                            duration REAL,
+                            date TEXT)''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS saved_games (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            board TEXT,
+                            current_player TEXT,
+                            date TEXT)''')
         conn.commit()
+        conn.close()
+
+    def save_game(self):
+        conn = sqlite3.connect('tic_tac_toe.db')
+        cursor = conn.cursor()
+        cursor.execute('''INSERT INTO saved_games (board, current_player, date)
+                          VALUES (?, ?, ?)''',
+                       (str(self.board), self.current_player, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        conn.commit()
+        conn.close()
+
+    def load_saved_game(self, game_id):
+        conn = sqlite3.connect('tic_tac_toe.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT board, current_player FROM saved_games WHERE id = ?', (game_id,))
+        row = cursor.fetchone()
+        if row:
+            self.board = ast.literal_eval(row[0]) 
+            self.current_player = row[1]
         conn.close()
 
     def save_game_history(self, winner, duration):
         conn = sqlite3.connect('tic_tac_toe.db')
         cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO game_history (winner, duration, date)
-            VALUES (?, ?, ?)
-        ''', (winner, duration, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        cursor.execute('''INSERT INTO game_history (winner, duration, date)
+                          VALUES (?, ?, ?)''',
+                       (winner, duration, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         conn.commit()
         conn.close()
 
@@ -110,10 +131,19 @@ class TicTacToe:
                         self.stdscr.getch()
                         return
                     self.current_player = 'O' if self.current_player == 'X' else 'X'
-            elif key == ord('m'): 
+            elif key == ord('m'):
                 selected_option = self.show_menu()
                 if selected_option == "Exit":
                     return
+                elif selected_option == "Save Game":
+                    self.save_game()
+                    return
+                elif selected_option == "Load Game":
+                    game_id = self.show_saved_games()
+                    if game_id:
+                        self.load_saved_game(game_id)
+                elif selected_option == "History":
+                    self.show_history() 
 
             self.stdscr.clear()
 
@@ -123,7 +153,7 @@ class TicTacToe:
         self.stdscr.getch()
 
     def show_menu(self):
-        menu_items = ["Continue", "History", "Exit", "save"]
+        menu_items = ["Continue", "Save Game", "Load Game", "History", "Exit"]
         current_row = 0
 
         while True:
@@ -141,16 +171,33 @@ class TicTacToe:
                 current_row -= 1
             elif key == curses.KEY_DOWN and current_row < len(menu_items) - 1:
                 current_row += 1
-            elif key == 10:  
-                if current_row == 1:  
-                    self.show_history()
-                if selected_option == "Exit":
-                    return
-                elif selected_option == "Save Game":
-                    self.save_game()
-                    return
-                elif selected_option == "History":
-                    self.show_history()  
+            elif key == 10: 
+                return menu_items[current_row]
+
+    def show_saved_games(self):
+        conn = sqlite3.connect('tic_tac_toe.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, date FROM saved_games')
+        rows = cursor.fetchall()
+
+        self.stdscr.clear()
+        if not rows:
+            self.stdscr.addstr(0, 0, "No saved games available.")
+        else:
+            self.stdscr.addstr(0, 0, "Saved Games:")
+            for idx, (game_id, date) in enumerate(rows, start=1):
+                self.stdscr.addstr(idx, 0, f"ID: {game_id}, Date: {date}")
+
+        self.stdscr.addstr(len(rows) + 2, 0, "Enter game ID to load:")
+        self.stdscr.refresh()
+
+        try:
+            game_id = int(self.stdscr.getstr().decode())
+        except ValueError:
+            game_id = None
+
+        conn.close()
+        return game_id
 
     def show_history(self):
         conn = sqlite3.connect('tic_tac_toe.db')
@@ -159,31 +206,23 @@ class TicTacToe:
         rows = cursor.fetchall()
 
         self.stdscr.clear()
-        
+
         if not rows:
             self.stdscr.addstr(0, 0, "No history available.")
         else:
             self.stdscr.addstr(0, 0, "Game History:")
-            max_y, max_x = self.stdscr.getmaxyx()  
+            max_y, max_x = self.stdscr.getmaxyx() 
 
             for idx, (winner, duration, date) in enumerate(rows, start=1):
                 history_line = f"Winner: {winner}, Duration: {duration:.2f} sec, Date: {date}"
-                if idx < max_y - 2:
-                    self.stdscr.addstr(idx, 0, history_line[:max_x - 1])  
+                if idx < max_y - 2:  
+                    self.stdscr.addstr(idx, 0, history_line[:max_x - 1]) 
 
         self.stdscr.addstr(max_y - 2, 0, "Press any key to return...")
         self.stdscr.refresh()
-        self.stdscr.getch()
+        self.stdscr.getch() 
 
         conn.close()
-def save_game(self):
-    conn = sqlite3.connect('tic_tac_toe.db') 
-    cursor = conn.cursor()  
-    cursor.execute('''INSERT INTO saved_games (board, current_player, date)
-                      VALUES (?, ?, ?)''', 
-                   (str(self.board), self.current_player, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))) 
-    conn.commit() 
-    conn.close()  
 
 def start_game(stdscr):
     curses.curs_set(0)
@@ -192,4 +231,5 @@ def start_game(stdscr):
     game.play_turn()
 
 curses.wrapper(start_game)
+
 
