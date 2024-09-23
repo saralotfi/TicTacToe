@@ -123,7 +123,7 @@ class TicTacToe:
         self.stdscr.getch()
 
     def show_menu(self):
-        menu_items = ["Continue", "History", "Exit"]
+        menu_items = ["Continue", "History", "Exit", "save"]
         current_row = 0
 
         while True:
@@ -144,10 +144,13 @@ class TicTacToe:
             elif key == 10:  
                 if current_row == 1:  
                     self.show_history()
-                elif current_row == 2:  
-                    return "Exit"
-                else:
-                    return "Continue"
+                if selected_option == "Exit":
+                    return
+                elif selected_option == "Save Game":
+                    self.save_game()
+                    return
+                elif selected_option == "History":
+                    self.show_history()  
 
     def show_history(self):
         conn = sqlite3.connect('tic_tac_toe.db')
@@ -173,6 +176,14 @@ class TicTacToe:
         self.stdscr.getch()
 
         conn.close()
+def save_game(self):
+    conn = sqlite3.connect('tic_tac_toe.db') 
+    cursor = conn.cursor()  
+    cursor.execute('''INSERT INTO saved_games (board, current_player, date)
+                      VALUES (?, ?, ?)''', 
+                   (str(self.board), self.current_player, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))) 
+    conn.commit() 
+    conn.close()  
 
 def start_game(stdscr):
     curses.curs_set(0)
